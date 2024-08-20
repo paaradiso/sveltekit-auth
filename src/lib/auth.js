@@ -13,7 +13,7 @@ export async function hashString(string) {
 	return await argon2.hash(string);
 }
 
-export async function verifyPassword(string, hash) {
+export async function verifyString(string, hash) {
 	return await argon2.verify(hash, string);
 }
 
@@ -97,36 +97,32 @@ export async function validateEmailVerificationToken(token) {
 }
 
 export async function createPasswordResetToken(userId) {
-	const storedUserTokens = await db
-		.select()
-		.from(passwordResetTokenTable)
-		.where(eq(passwordResetTokenTable.userId, userId));
-
-	if (storedUserTokens.length > 0) {
-		const storedTokenWithinExpiry = storedUserTokens.find((token) => token.expiresAt > new Date());
-		if (storedTokenWithinExpiry) {
-			return storedTokenWithinExpiry.id;
-		}
-	}
+	await db.delete(passwordResetTokenTable).where(eq(passwordResetTokenTable.userId, userId));
 
 	const id = randomString(64);
 	const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
-	await db.insert(passwordResetTokenTable).values({ id, userId, expiresAt });
+	const hashedId = await hashString(id);
+	await db.insert(passwordResetTokenTable).values({ id: hashedId, userId, expiresAt });
 
 	return id;
 }
 
 export async function validatePasswordResetToken(token) {
-	const [storedToken] = await db
-		.delete(passwordResetTokenTable)
-		.where(eq(passwordResetTokenTable.id, token))
-		.returning();
+	const storedTokens = await db.select().from(passwordResetTokenTable);
 
-	const tokenExpired = storedToken.expiresAt < new Date();
+	const validToken = storedTokens.find((tokenInDatabase) =>
+		verifyString(token, tokenInDatabase.id)
+	);
+
+	if (!validToken) {
+		throw new Error('INVALID_TOKEN');
+	}
+
+	const tokenExpired = validToken.expiresAt < new Date();
 	if (tokenExpired) {
 		throw new Error('TOKEN_EXPIRED');
 	}
-	return storedToken.userId;
+	return validToken.userId;
 }
 
 export async function getUserBySessionId(sessionId) {

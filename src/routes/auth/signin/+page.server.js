@@ -2,7 +2,7 @@ import { isValidEmail } from '$lib/helpers';
 import {
 	getUserByEmail,
 	getUserByUsername,
-	verifyPassword,
+	verifyString,
 	setSession,
 	createSession
 } from '$lib/auth';
@@ -20,7 +20,7 @@ export const actions = {
 		} else {
 			user = await getUserByUsername(usernameOrEmail);
 		}
-		const passwordIsValid = await verifyPassword(password, user.password);
+		const passwordIsValid = await verifyString(password, user.password);
 		if (!passwordIsValid) {
 			return; // password is not valid
 		}

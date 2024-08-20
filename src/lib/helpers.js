@@ -21,3 +21,7 @@ export function isValidEmail(email) {
 	const emailRegexp = /^.+@.+$/;
 	return emailRegexp.test(email);
 }
+
+export function arrayRandom(array) {
+	return array[randomInt(0, array.length)];
+}

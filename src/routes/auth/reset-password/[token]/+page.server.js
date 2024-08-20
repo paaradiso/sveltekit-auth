@@ -3,7 +3,8 @@ import { passwordResetTokenTable, userTable } from '$lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { redirect } from '@sveltejs/kit';
 import {
-	hashPassword,
+	hashString,
+	verifyString,
 	createSession,
 	setSession,
 	validatePasswordResetToken,
@@ -12,13 +13,21 @@ import {
 } from '$lib/auth';
 
 export async function load({ params: { token } }) {
-	const [tokenIsInDatabase] = await db
-		.select()
-		.from(passwordResetTokenTable)
-		.where(eq(passwordResetTokenTable.id, token));
-	if (!tokenIsInDatabase) {
+	const storedTokens = await db.select().from(passwordResetTokenTable);
+
+	console.log(storedTokens);
+
+	const validToken = storedTokens.find((tokenInDatabase) =>
+		verifyString(token, tokenInDatabase.id)
+	);
+	if (!validToken) {
 		// token is not in database
 		redirect(302, '/auth/signin');
+	}
+
+	const tokenExpired = validToken.expiresAt < new Date();
+	if (tokenExpired) {
+		redirect(302, '/');
 	}
 	return;
 }
@@ -33,7 +42,7 @@ export const actions = {
 
 		await invalidateAllUserSessions(user.id);
 
-		const hashedPassword = await hashPassword(password);
+		const hashedPassword = await hashString(password);
 
 		console.log({ userId, user, hashedPassword, password });
 
