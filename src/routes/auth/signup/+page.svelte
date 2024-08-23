@@ -6,7 +6,7 @@
 
 <div class="container flex items-center justify-center">
 	<Card.Root class="flex w-[500px] flex-col items-center justify-center gap-2">
-		<Card.Header class="text-4xl font-semibold">Sign Up</Card.Header>
+		<Card.Header class="text-4xl font-medium">Sign Up</Card.Header>
 		<Card.Content class="flex w-full flex-col gap-4">
 			<SignUpForm data={data.form} />
 			<div class="flex justify-center gap-1">
