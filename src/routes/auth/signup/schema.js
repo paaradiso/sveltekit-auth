@@ -9,8 +9,12 @@ export const formSchema = z
 			.min(5, { message: 'Must contain at least 5 characters' })
 			.max(50, { message: 'Must contain fewer than 50 characters' }),
 		email: z.string().email({ message: 'Invalid email address' }),
-		password: z.string().min(8, { message: 'Must contain at least 8 characters' }).max(1024),
-		confirmPassword: z.string().min(8, { message: 'Must contain at least 8 characters' }).max(1024)
+		password: z.string().min(8, { message: 'Must be at least 8 characters long.' }).max(1024),
+		confirmPassword: z
+			.string()
+			.min(8, { message: 'Must be at least 8 characters long.' })
+			.max(1024),
+		'cf-turnstile-response': z.string()
 	})
 	.refine((data) => data.password === data.confirmPassword, {
 		message: 'Passwords do not match',

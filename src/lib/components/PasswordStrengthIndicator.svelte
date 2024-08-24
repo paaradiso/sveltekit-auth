@@ -15,7 +15,7 @@
 			<div class="h-1 w-1/4 rounded-lg {bgColours[score - 1]}" />
 		{/each}
 		{#each Array(4 - score).fill(0) as _}
-			<div class="h-1 w-1/4 rounded-lg bg-neutral-200 dark:bg-neutral-700" />
+			<div class="h-1 w-1/4 rounded-lg bg-zinc-200 dark:bg-zinc-700" />
 		{/each}
 	</div>
 	<div class="flex w-full justify-end text-sm {textColours[score - 1]}">
