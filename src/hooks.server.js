@@ -5,6 +5,12 @@ export async function handle({ event, resolve }) {
 
 	event.locals.session = await getSession(sessionId);
 
+	if (event.locals.session?.expiresAt < new Date()) {
+		event.cookies.delete('session', {
+			path: '/'
+		});
+	}
+
 	if (!event.locals.session && sessionId) {
 		// if session cookie exists but session does not
 		event.cookies.delete('session', {

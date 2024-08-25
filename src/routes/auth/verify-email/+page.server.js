@@ -11,6 +11,9 @@ export async function load({ cookies, locals }) {
 	if (user && user.emailVerified) {
 		redirect(302, '/');
 	}
+	return {
+		email: user.email
+	};
 }
 
 export const actions = {
@@ -18,7 +21,6 @@ export const actions = {
 		const { user } = locals;
 		// user must exist; they would get redirected before this action is called
 		const emailVerificationToken = await createEmailVerificationToken(user.id);
-		console.log(emailVerificationToken);
 		await sendVerificationEmail(emailVerificationToken, user.email);
 	}
 };

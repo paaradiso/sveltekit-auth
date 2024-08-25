@@ -9,19 +9,24 @@ import {
 import { db } from '$lib/db/db';
 import { userTable } from '$lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { redirect } from '@sveltejs/kit';
 
-export async function GET({ params: { token }, cookies, locals }) {
+export async function load({ params: { token }, cookies, locals }) {
 	if (token.length != 64) {
 		return new Response('Invalid token', { status: 400 });
 	}
 	const { user } = locals;
 	if (!user) {
-		return new Response('Unauthorised', { status: 400 });
+		throw redirect(302, '/');
+	}
+
+	if (user.emailVerified) {
+		throw redirect(302, '/');
 	}
 
 	const userId = await validateEmailVerificationToken(token);
 	if (!userId && userId !== user.id) {
-		return new Response('Invalid token', { status: 400 });
+		throw redirect(302, '/');
 	}
 	await invalidateAllUserSessions(user.id);
 	await db.update(userTable).set({ emailVerified: true }).where(eq(userTable.id, user.id));
@@ -30,10 +35,7 @@ export async function GET({ params: { token }, cookies, locals }) {
 
 	setSession(cookies.set, session);
 
-	return new Response(null, {
-		status: 302,
-		headers: {
-			Location: '/'
-		}
-	});
+	return {
+		user
+	};
 }
