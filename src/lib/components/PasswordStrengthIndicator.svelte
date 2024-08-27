@@ -1,12 +1,13 @@
 <script>
 	import z from 'zxcvbn';
 	export let password;
+	export let minimumLength;
 
 	let bgColours = ['bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-green-400'];
 	let textColours = ['text-red-400', 'text-orange-400', 'text-yellow-400', 'text-green-400'];
-	let strengthText = ['Too Weak', 'Weak', 'Good', 'Strong'];
+	let strengthText = ['Very Weak', 'Weak', 'Good', 'Strong'];
 
-	$: score = z(password || 'a').score;
+	$: score = z(password.length > minimumLength ? password : '').score;
 </script>
 
 <div class="flex h-0 flex-col gap-1">

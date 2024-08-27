@@ -64,36 +64,47 @@ export async function getSession(sessionId) {
 }
 
 export async function createEmailVerificationToken(userId) {
-	const storedUserTokens = await db
+	const [existingToken] = await db
 		.select()
 		.from(emailVerificationTokenTable)
 		.where(eq(emailVerificationTokenTable.userId, userId));
 
-	if (storedUserTokens.length > 0) {
-		const storedTokenWithinExpiry = storedUserTokens.find((token) => token.expiresAt > new Date());
-		if (storedTokenWithinExpiry) {
-			return storedTokenWithinExpiry.id;
-		}
+	if (
+		existingToken &&
+		Date.now() - (existingToken.expiresAt - 1000 * 60 * 60 * 24) < 1000 * 60 * 5 // 5 minutes
+	) {
+		throw new Error('RATE_LIMIT');
 	}
+
+	await db
+		.delete(emailVerificationTokenTable)
+		.where(eq(emailVerificationTokenTable.userId, userId));
 
 	const id = randomString(64);
 	const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
-	await db.insert(emailVerificationTokenTable).values({ id, userId, expiresAt });
+	const hashedId = await hashString(id);
+
+	await db.insert(emailVerificationTokenTable).values({ id: hashedId, userId, expiresAt });
 
 	return id;
 }
 
 export async function validateEmailVerificationToken(token) {
-	const [storedToken] = await db
-		.delete(emailVerificationTokenTable)
-		.where(eq(emailVerificationTokenTable.id, token))
-		.returning();
+	const storedTokens = await db.select().from(emailVerificationTokenTable);
 
-	const tokenExpired = storedToken.expiresAt < new Date();
+	const validToken = storedTokens.find((tokenInDatabase) =>
+		verifyString(token, tokenInDatabase.id)
+	);
+
+	if (!validToken) {
+		throw new Error('INVALID_TOKEN');
+	}
+
+	const tokenExpired = validToken.expiresAt < new Date();
 	if (tokenExpired) {
 		throw new Error('TOKEN_EXPIRED');
 	}
-	return storedToken.userId;
+	return validToken.userId;
 }
 
 export async function createPasswordResetToken(userId) {

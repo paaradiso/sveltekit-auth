@@ -1,7 +1,9 @@
 <script>
 	import * as Card from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
+	import { slide } from 'svelte/transition';
 	export let data;
+	export let form;
 </script>
 
 <div class="container flex items-center justify-center">
@@ -22,8 +24,13 @@
 					<form action="?/resendEmail" method="POST">
 						<Button type="submit">Resend email</Button>
 					</form>
+					{#if form?.error}
+						<p transition:slide={{ duration: 300 }} class="text-sm text-destructive">
+							{form.error}
+						</p>
+					{/if}
 				</div>
-			</div></Card.Content
-		>
+			</div>
+		</Card.Content>
 	</Card.Root>
 </div>

@@ -16,22 +16,22 @@ export async function load({ params: { token }, cookies, locals }) {
 		return new Response('Invalid token', { status: 400 });
 	}
 	const { user } = locals;
-	if (!user) {
-		throw redirect(302, '/');
-	}
+	// if (!user) {
+	// 	throw redirect(302, '/');
+	// }
 
-	if (user.emailVerified) {
-		throw redirect(302, '/');
-	}
+	// if (user?.emailVerified) {
+	// 	throw redirect(302, '/');
+	// }
 
 	const userId = await validateEmailVerificationToken(token);
-	if (!userId && userId !== user.id) {
-		throw redirect(302, '/');
-	}
-	await invalidateAllUserSessions(user.id);
-	await db.update(userTable).set({ emailVerified: true }).where(eq(userTable.id, user.id));
+	// if (!userId && userId !== user.id) {
+	// 	throw redirect(302, '/');
+	// }
+	await invalidateAllUserSessions(userId);
+	await db.update(userTable).set({ emailVerified: true }).where(eq(userTable.id, userId));
 
-	const session = await createSession(user.id);
+	const session = await createSession(userId);
 
 	setSession(cookies.set, session);
 

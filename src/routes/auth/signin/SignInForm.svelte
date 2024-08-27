@@ -1,7 +1,6 @@
 <script lang="ts">
 	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
-	import PasswordStrengthIndicator from '$lib/components/PasswordStrengthIndicator.svelte';
 	import { Eye, EyeOff } from 'lucide-svelte';
 	import { formSchema } from './schema';
 	import { superForm } from 'sveltekit-superforms';
@@ -9,14 +8,14 @@
 	import { theme } from '$lib/stores/theme';
 	import { Turnstile } from 'svelte-turnstile';
 	import { PUBLIC_CF_TURNSTILE_SITE_KEY } from '$env/static/public';
-	import { slide, fade } from 'svelte/transition';
+	import { slide } from 'svelte/transition';
 
 	export let data;
 	const form = superForm(data, {
 		validators: zodClient(formSchema)
 	});
+
 	let showPassword = false;
-	let showConfirmPassword = false;
 	const { form: formData, enhance, errors } = form;
 </script>
 
@@ -28,15 +27,14 @@
 			</p>
 		{/if}
 	</div>
-	<Form.Field {form} name="username">
+	<Form.Field {form} name="usernameOrEmail">
 		<Form.Control let:attrs>
-			<Form.Label>Username</Form.Label>
-			<Input {...attrs} bind:value={$formData.username} />
+			<Form.Label>Username or Email</Form.Label>
+			<Input {...attrs} bind:value={$formData.usernameOrEmail} />
 		</Form.Control>
-		<Form.Description>Choose a unique username that will identify you on our site.</Form.Description
-		>
+		<Form.Description>Enter your username or email address to sign in.</Form.Description>
 		<Form.FieldErrors class="flex flex-col">
-			{#each $errors.username || [] as error}
+			{#each $errors.usernameOrEmail || [] as error}
 				<p
 					transition:slide={{ duration: 300 }}
 					class="whitespace-pre-line text-sm text-destructive"
@@ -44,20 +42,6 @@
 					{error}
 				</p>
 			{/each}
-		</Form.FieldErrors>
-	</Form.Field>
-	<Form.Field {form} name="email">
-		<Form.Control let:attrs>
-			<Form.Label>Email</Form.Label>
-			<Input {...attrs} type="email" bind:value={$formData.email} />
-		</Form.Control>
-		<Form.Description>We'll never share your email with anyone else.</Form.Description>
-		<Form.FieldErrors>
-			{#if $errors.email}
-				<p transition:slide={{ duration: 300 }} class="text-sm text-destructive">
-					{$errors.email}
-				</p>
-			{/if}
 		</Form.FieldErrors>
 	</Form.Field>
 	<Form.Field {form} name="password">
@@ -78,41 +62,9 @@
 				</button>
 			</div>
 		</Form.Control>
-		<PasswordStrengthIndicator password={$formData.password} minimumLength="8" />
-		<Form.Description>Choose a strong password with at least 8 characters.</Form.Description>
-		<Form.FieldErrors>
-			{#if $errors.password}
-				<p transition:slide={{ duration: 300 }} class="text-sm text-destructive">
-					{$errors.password}
-				</p>
-			{/if}
-		</Form.FieldErrors>
-	</Form.Field>
-	<Form.Field {form} name="confirmPassword">
-		<Form.Control let:attrs>
-			<Form.Label>Confirm Password</Form.Label>
-			<div class="flex">
-				<Input
-					type={showConfirmPassword ? 'text' : 'password'}
-					{...attrs}
-					bind:value={$formData.confirmPassword}
-				/>
-				<button
-					on:click={() => (showConfirmPassword = !showConfirmPassword)}
-					type="button"
-					class="-ml-8"
-				>
-					{#if showConfirmPassword}
-						<EyeOff size={20} />
-					{:else}
-						<Eye size={20} />
-					{/if}
-				</button>
-			</div>
-		</Form.Control>
-		<Form.Description>Re-enter your password to ensure it's correct.</Form.Description>
+		<Form.Description>Enter your account password.</Form.Description>
 		<Form.FieldErrors class="flex flex-col">
-			{#each $errors.confirmPassword || [] as error}
+			{#each $errors.password || [] as error}
 				<p
 					transition:slide={{ duration: 300 }}
 					class="whitespace-pre-line text-sm text-destructive"

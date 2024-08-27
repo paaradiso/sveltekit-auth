@@ -32,8 +32,10 @@ export const actions = {
 		const token = form.data['cf-turnstile-response'];
 		const { success, error } = await validateCaptcha(token, CF_TURNSTILE_SECRET_KEY);
 
+		const errorMessage =
+			error === 'missing-input-response' ? 'Please complete the CAPTCHA' : 'Invalid CAPTCHA';
 		if (!success) {
-			return setError(form, 'other', error || 'Invalid CAPTCHA');
+			return setError(form, 'other', errorMessage);
 		}
 
 		try {
