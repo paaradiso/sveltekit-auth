@@ -6,6 +6,7 @@ export async function handle({ event, resolve }) {
 	event.locals.session = await getSession(sessionId);
 
 	if (event.locals.session?.expiresAt < new Date()) {
+		// if session has expired
 		event.cookies.delete('session', {
 			path: '/'
 		});
