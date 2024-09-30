@@ -192,10 +192,8 @@ export async function validateCaptcha(token, secret) {
 	const data = await response.json();
 
 	return {
-		// Return the status
 		success: data.success,
 
-		// Return the first error if it exists
 		error: data['error-codes']?.length ? data['error-codes'][0] : null
 	};
 }
