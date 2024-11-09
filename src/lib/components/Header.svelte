@@ -14,7 +14,6 @@
 	<div class="container flex h-14 items-center justify-between">
 		<div class="flex flex-row items-center gap-4">
 			<a href="/" class="text-sm">Home</a>
-			<a href="/music" class="text-sm">Music</a>
 		</div>
 		<div class="flex flex-row items-center gap-4">
 			{#if user}

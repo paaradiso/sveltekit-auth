@@ -11,50 +11,79 @@ import {
 	invalidateAllUserSessions,
 	getUserById
 } from '$lib/auth';
+import {
+	createUser,
+	createSession,
+	setSession,
+	createEmailVerificationToken,
+	validateCaptcha
+} from '$lib/auth';
+import { sendVerificationEmail } from '$lib/email';
+import { randomString } from '$lib/helpers';
+import { fail, redirect } from '@sveltejs/kit';
+
+import { superValidate, setError } from 'sveltekit-superforms';
+import { formSchema } from './schema';
+import { zod } from 'sveltekit-superforms/adapters';
+import { CF_TURNSTILE_SECRET_KEY } from '$env/static/private';
 
 export async function load({ params: { token } }) {
-	const storedTokens = await db.select().from(passwordResetTokenTable);
+	const userId = await validatePasswordResetToken(token);
 
-	console.log(storedTokens);
-
-	const validToken = storedTokens.find((tokenInDatabase) =>
-		verifyString(token, tokenInDatabase.id)
-	);
-	if (!validToken) {
-		// token is not in database
-		redirect(302, '/auth/signin');
+	if (!userId) {
+		return new Response('Invalid token', { status: 400 });
 	}
 
-	const tokenExpired = validToken.expiresAt < new Date();
-	if (tokenExpired) {
-		redirect(302, '/');
-	}
-	return;
+	const user = await getUserById(userId);
+
+	return {
+		user,
+		form: await superValidate(zod(formSchema))
+	};
 }
 
 export const actions = {
-	default: async ({ request, params: { token }, cookies }) => {
-		const formData = await request.formData();
-		const password = formData.get('password');
+	default: async (event) => {
+		const form = await superValidate(event, zod(formSchema));
+		if (!form.valid) {
+			return fail(400, {
+				form
+			});
+		}
+		const cfToken = form.data['cf-turnstile-response'];
+		const { success, error } = await validateCaptcha(cfToken, CF_TURNSTILE_SECRET_KEY);
 
-		const userId = await validatePasswordResetToken(token);
-		const user = await getUserById(userId);
+		const errorMessage =
+			error === 'missing-input-response' ? 'Please complete the CAPTCHA' : 'Invalid CAPTCHA';
+		if (!success) {
+			return setError(form, 'other', errorMessage);
+		}
 
-		await invalidateAllUserSessions(user.id);
+		try {
+			const token = event.params.token;
+			const userId = await validatePasswordResetToken(token);
+			const user = await getUserById(userId);
 
-		const hashedPassword = await hashString(password);
+			await invalidateAllUserSessions(user.id);
 
-		console.log({ userId, user, hashedPassword, password });
+			const password = form.data.password;
+			const hashedPassword = await hashString(password);
 
-		await db
-			.update(userTable)
-			.set({ password: hashedPassword, emailVerified: true })
-			.where(eq(userTable.id, user.id));
+			await db
+				.update(userTable)
+				.set({ password: hashedPassword, emailVerified: true })
+				.where(eq(userTable.id, user.id));
 
-		const session = await createSession(user.id);
-
-		setSession(cookies.set, session);
-
-		redirect(302, '/');
+			const session = await createSession(user.id);
+			setSession(event.cookies.set, session);
+		} catch (error) {
+			console.error(error.message);
+			return setError(
+				form,
+				'other',
+				'An unknown error occurred. Please try again or contact support if the issue persists.'
+			);
+		}
+		redirect(302, `/auth/reset-password/done`);
 	}
 };

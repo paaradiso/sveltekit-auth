@@ -92,19 +92,16 @@ export async function createEmailVerificationToken(userId) {
 export async function validateEmailVerificationToken(token) {
 	const storedTokens = await db.select().from(emailVerificationTokenTable);
 
-	const validToken = storedTokens.find((tokenInDatabase) =>
-		verifyString(token, tokenInDatabase.id)
-	);
-
-	if (!validToken) {
-		throw new Error('INVALID_TOKEN');
+	for (const tokenInDatabase of storedTokens) {
+		if (await verifyString(token, tokenInDatabase.id)) {
+			if (tokenInDatabase.expiresAt < new Date()) {
+				throw new Error('TOKEN_EXPIRED');
+			}
+			return tokenInDatabase.userId;
+		}
 	}
 
-	const tokenExpired = validToken.expiresAt < new Date();
-	if (tokenExpired) {
-		throw new Error('TOKEN_EXPIRED');
-	}
-	return validToken.userId;
+	throw new Error('INVALID_TOKEN');
 }
 
 export async function createPasswordResetToken(userId) {
@@ -121,19 +118,17 @@ export async function createPasswordResetToken(userId) {
 export async function validatePasswordResetToken(token) {
 	const storedTokens = await db.select().from(passwordResetTokenTable);
 
-	const validToken = storedTokens.find((tokenInDatabase) =>
-		verifyString(token, tokenInDatabase.id)
-	);
-
-	if (!validToken) {
-		throw new Error('INVALID_TOKEN');
+	for (const tokenInDatabase of storedTokens) {
+		console.log(`checking token ${token} against ${tokenInDatabase.id}`);
+		if (await verifyString(token, tokenInDatabase.id)) {
+			if (tokenInDatabase.expiresAt < new Date()) {
+				throw new Error('TOKEN_EXPIRED');
+			}
+			return tokenInDatabase.userId;
+		}
 	}
 
-	const tokenExpired = validToken.expiresAt < new Date();
-	if (tokenExpired) {
-		throw new Error('TOKEN_EXPIRED');
-	}
-	return validToken.userId;
+	throw new Error('INVALID_TOKEN');
 }
 
 export async function getUserBySessionId(sessionId) {
