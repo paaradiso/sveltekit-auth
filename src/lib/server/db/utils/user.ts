@@ -1,5 +1,5 @@
-import { db } from '$lib/db/db';
-import { type NewUser } from '$lib/db/types';
+import { db } from '$lib/server/db/db';
+import { type NewUser } from '$lib/server/db/types';
 import { v7 as uuidv7 } from 'uuid';
 
 export async function createUser(userData: Omit<NewUser, 'id'>) {
