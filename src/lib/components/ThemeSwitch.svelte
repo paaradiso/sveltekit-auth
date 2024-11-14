@@ -2,10 +2,6 @@
 	import { theme } from '$lib/state/theme.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Moon, Sun } from 'lucide-svelte';
-
-	$effect(() => {
-		theme.init();
-	});
 </script>
 
 <Button

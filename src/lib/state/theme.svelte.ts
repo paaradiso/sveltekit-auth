@@ -1,13 +1,17 @@
 class Theme {
 	value = $state('light');
 
-	init() {
-		const storedTheme = localStorage.getItem('theme');
-		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+	contructor() {
+		$effect.root(() => {
+			$effect(() => {
+				const storedTheme = localStorage.getItem('theme');
+				const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-		if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
-			this.value = 'dark';
-		}
+				if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
+					this.value = 'dark';
+				}
+			});
+		});
 	}
 
 	toggleTheme() {

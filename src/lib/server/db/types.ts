@@ -2,6 +2,7 @@ import type { Insertable, Selectable, Updateable, Generated, GeneratedAlways } f
 
 export interface Database {
 	user: UserTable;
+	session: SessionTable;
 }
 
 export interface UserTable {
